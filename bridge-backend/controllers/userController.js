@@ -1,5 +1,5 @@
 
-const User = require("../models/User");
+const User = require("../models/user");
 
 // Fields users are allowed to update themselves
 const allowedFields = [
