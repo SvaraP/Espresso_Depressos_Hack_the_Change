@@ -8,6 +8,7 @@ const helmet = require("helmet");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
+const matchRoutes = require("./routes/matchRoutes");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(express.json());
 // Authentication routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/matches", matchRoutes);
 
 // Health check endpoint
 app.get("/api/v1/health", (req, res) => {
