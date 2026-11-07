@@ -1,0 +1,2 @@
+echo "xcuserdata/" >> .gitignore
+echo "*.xcuserstate" >> .gitignore
