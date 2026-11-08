@@ -1,47 +1,75 @@
 
 import SwiftUI
 
+// MARK: - KINDRED TABS
+
 enum KindredTab: Int, CaseIterable {
-    case home
+
     case matches
     case activities
     case chats
     case profile
 
     var title: String {
+
         switch self {
-        case .home: return "Home"
-        case .matches: return "Matches"
-        case .activities: return "Activities"
-        case .chats: return "Chats"
-        case .profile: return "Profile"
+
+        case .matches:
+            return "Matches"
+
+        case .activities:
+            return "Activities"
+
+        case .chats:
+            return "Chats"
+
+        case .profile:
+            return "Profile"
         }
     }
 
     var icon: String {
+
         switch self {
-        case .home: return "house"
-        case .matches: return "person.2"
-        case .activities: return "calendar"
-        case .chats: return "message"
-        case .profile: return "person.crop.circle"
+
+        case .matches:
+            return "person.2"
+
+        case .activities:
+            return "calendar"
+
+        case .chats:
+            return "message"
+
+        case .profile:
+            return "person.crop.circle"
         }
     }
 
     var selectedIcon: String {
+
         switch self {
-        case .home: return "house.fill"
-        case .matches: return "person.2.fill"
-        case .activities: return "calendar"
-        case .chats: return "message.fill"
-        case .profile: return "person.crop.circle.fill"
+
+        case .matches:
+            return "person.2.fill"
+
+        case .activities:
+            return "calendar"
+
+        case .chats:
+            return "message.fill"
+
+        case .profile:
+            return "person.crop.circle.fill"
         }
     }
 }
 
+// MARK: - MAIN TAB VIEW
+
 struct MainTabView: View {
 
-    @State private var selectedTab: KindredTab = .home
+    @State private var selectedTab: KindredTab = .matches
 
     private let forestGreen = Color(
         red: 0.12,
@@ -59,33 +87,20 @@ struct MainTabView: View {
 
         ZStack {
 
-            // CURRENT SCREEN
-            Group {
-                switch selectedTab {
+            // MARK: CURRENT SCREEN
 
-                case .home:
-                    placeholderPage(
-                        title: "Home",
-                        subtitle: "Your Kindred dashboard",
-                        icon: "house.fill"
-                    )
+            Group {
+
+                switch selectedTab {
 
                 case .matches:
                     MatchesView()
 
                 case .activities:
-                    placeholderPage(
-                        title: "Activities",
-                        subtitle: "Discover something together",
-                        icon: "calendar"
-                    )
+                    ActivitiesView()
 
                 case .chats:
-                    placeholderPage(
-                        title: "Chats",
-                        subtitle: "Connect with your matches",
-                        icon: "message.fill"
-                    )
+                    ChatsView()
 
                 case .profile:
                     ProfileView()
@@ -93,9 +108,11 @@ struct MainTabView: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
+
             bottomNavigationBar
         }
         .toolbar(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden(true)
     }
 
     // MARK: - BOTTOM NAVIGATION BAR
@@ -107,7 +124,12 @@ struct MainTabView: View {
             ForEach(KindredTab.allCases, id: \.self) { tab in
 
                 Button {
-                    selectedTab = tab
+
+                    withAnimation(.easeInOut(duration: 0.15)) {
+
+                        selectedTab = tab
+                    }
+
                 } label: {
 
                     VStack(spacing: 6) {
@@ -120,12 +142,14 @@ struct MainTabView: View {
                         .font(.system(size: 23))
 
                         Text(tab.title)
-                            .font(.system(
-                                size: 11,
-                                weight: selectedTab == tab
-                                    ? .semibold
-                                    : .medium
-                            ))
+                            .font(
+                                .system(
+                                    size: 11,
+                                    weight: selectedTab == tab
+                                        ? .semibold
+                                        : .medium
+                                )
+                            )
                     }
                     .foregroundStyle(
                         selectedTab == tab
@@ -137,15 +161,21 @@ struct MainTabView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(tab.title)
+                .accessibilityAddTraits(
+                    selectedTab == tab ? .isSelected : []
+                )
             }
         }
         .padding(.horizontal, 8)
         .padding(.top, 10)
         .padding(.bottom, 4)
         .background {
+
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .overlay(alignment: .top) {
+
                     Rectangle()
                         .fill(forestGreen.opacity(0.15))
                         .frame(height: 1)
@@ -153,87 +183,14 @@ struct MainTabView: View {
                 .ignoresSafeArea(edges: .bottom)
         }
     }
-
-    // MARK: - TEMPORARY PAGES
-
-    private func placeholderPage(
-        title: String,
-        subtitle: String,
-        icon: String
-    ) -> some View {
-
-        GeometryReader { geometry in
-
-            ZStack {
-
-                Image("WelcomeBackground")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(
-                        width: geometry.size.width,
-                        height: geometry.size.height
-                    )
-                    .clipped()
-                    .ignoresSafeArea()
-
-                VStack(spacing: 0) {
-
-                    VStack(alignment: .leading, spacing: 8) {
-
-                        Text(title)
-                            .font(.system(
-                                size: 36,
-                                weight: .bold
-                            ))
-
-                        Text(subtitle)
-                            .font(.system(
-                                size: 20,
-                                weight: .bold
-                            ))
-                    }
-                    .foregroundStyle(forestGreen)
-                    .frame(
-                        maxWidth: .infinity,
-                        alignment: .leading
-                    )
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 12)
-                    .background(.ultraThinMaterial)
-                    .padding(.top, 35)
-
-                    Spacer()
-
-                    VStack(spacing: 18) {
-
-                        Image(systemName: icon)
-                            .font(.system(size: 50))
-
-                        Text(title)
-                            .font(.system(
-                                size: 25,
-                                weight: .bold
-                            ))
-
-                        Text("Coming soon")
-                            .font(.system(size: 16))
-                    }
-                    .foregroundStyle(cream)
-                    .frame(maxWidth: .infinity)
-                    .padding(35)
-                    .background {
-                        RoundedRectangle(cornerRadius: 22)
-                            .fill(forestGreen.opacity(0.9))
-                    }
-                    .padding(.horizontal, 28)
-
-                    Spacer()
-                }
-            }
-        }
-    }
 }
 
+// MARK: - PREVIEW
+
 #Preview {
-    MainTabView()
+
+    NavigationStack {
+
+        MainTabView()
+    }
 }
