@@ -91,8 +91,8 @@ struct ContentView: View {
                         }
 
                         // LOG IN BUTTON
-                        Button {
-                            print("Log In tapped")
+                        NavigationLink {
+                            LoginView()
                         } label: {
                             Text("Log In")
                                 .font(
