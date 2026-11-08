@@ -483,7 +483,8 @@ struct SignUpView: View {
         .navigationDestination(
             isPresented: $showProfile
         ) {
-            ProfileView()
+            MainTabView()
+                .navigationBarBackButtonHidden(true)
         }
     }
 

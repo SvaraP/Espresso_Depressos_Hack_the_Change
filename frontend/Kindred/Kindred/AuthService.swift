@@ -2,16 +2,25 @@
 import Foundation
 import Security
 
+// MARK: - LOGIN REQUEST
+
 struct LoginRequest: Encodable {
+
     let email: String
     let password: String
 }
 
+// MARK: - LOGIN RESPONSE
+
 struct LoginResponse: Decodable {
+
     let token: String
 }
 
+// MARK: - REGISTRATION REQUEST
+
 struct RegistrationRequest: Encodable {
+
     let name: String
     let email: String
     let password: String
@@ -19,38 +28,63 @@ struct RegistrationRequest: Encodable {
     let role: String
 }
 
+// MARK: - PROFILE UPDATE REQUEST
+
 struct ProfileUpdateRequest: Encodable {
+
     let participationRoles: [String]
+
     let interests: [String]
+
     let skillsOffered: [String]
+
     let skillsWanted: [String]
+
     let goals: [String]
+
     let activityPreference: String
+
     let meetingPreference: String
+
     let availability: [String]
+
     let location: UserLocation
+
     let accessibilityNeeds: [String]
+
+    // New accessibility fields
+    let accessibilityRequired: Bool
+    let accessibilityNotes: String
 }
 
+// MARK: - AUTHENTICATION ERRORS
+
 enum AuthError: LocalizedError {
+
     case invalidResponse
     case serverError(String)
 
     var errorDescription: String? {
+
         switch self {
+
         case .invalidResponse:
             return "Invalid response from server."
+
         case .serverError(let message):
             return message
         }
     }
 }
 
+// MARK: - AUTH SERVICE
+
 final class AuthService {
 
     static let shared = AuthService()
 
-    private let baseURL = "http://127.0.0.1:5000/api/v1"
+    private let baseURL =
+        "http://127.0.0.1:5000/api/v1"
 
     private init() {}
 
@@ -91,6 +125,8 @@ final class AuthService {
         profile: UserProfile
     ) async throws {
 
+        // STEP 1: CREATE ACCOUNT
+
         let requestBody = RegistrationRequest(
             name: name,
             email: email,
@@ -110,33 +146,83 @@ final class AuthService {
             from: registrationData
         )
 
-        // Save token immediately after account creation.
-        // If profile setup fails, the session can still be recovered.
+        // Save JWT token after registration
         try saveToken(registration.token)
 
-        // Convert meeting preferences to backend format
+        // STEP 2: CONVERT MEETING PREFERENCES
+
         let meetingPreference: String
 
         if profile.meetingPreference.contains("both") ||
             profile.meetingPreference.count > 1 {
+
             meetingPreference = "both"
+
         } else {
+
             meetingPreference =
                 profile.meetingPreference.first ?? "both"
         }
 
+        // STEP 3: PREPARE ACCESSIBILITY DATA
+
+        let requiresAccessibility =
+            profile.accessibilityRequired ?? false
+
+        let notes = requiresAccessibility
+            ? profile.accessibilityNotes.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+            : ""
+
+        // Keep the existing backend field for compatibility
+        let accessibilityNeeds: [String] =
+            requiresAccessibility && !notes.isEmpty
+                ? [notes]
+                : []
+
+        // STEP 4: CREATE PROFILE UPDATE
+
         let profileBody = ProfileUpdateRequest(
-            participationRoles: profile.participationRole,
-            interests: profile.interests,
-            skillsOffered: profile.skillsOffered,
-            skillsWanted: profile.skillsWanted,
-            goals: profile.goals,
-            activityPreference: profile.activityPreference,
-            meetingPreference: meetingPreference,
-            availability: profile.availability,
-            location: profile.location,
-            accessibilityNeeds: []
+
+            participationRoles:
+                profile.participationRole,
+
+            interests:
+                profile.interests,
+
+            skillsOffered:
+                profile.skillsOffered,
+
+            skillsWanted:
+                profile.skillsWanted,
+
+            goals:
+                profile.goals,
+
+            activityPreference:
+                profile.activityPreference,
+
+            meetingPreference:
+                meetingPreference,
+
+            availability:
+                profile.availability,
+
+            location:
+                profile.location,
+
+            accessibilityNeeds:
+                accessibilityNeeds,
+
+            accessibilityRequired:
+                requiresAccessibility,
+
+            accessibilityNotes:
+                notes
         )
+
+        // STEP 5: SAVE PROFILE TO BACKEND
 
         _ = try await sendRequest(
             endpoint: "/users/me",
@@ -158,10 +244,12 @@ final class AuthService {
         guard let url = URL(
             string: baseURL + endpoint
         ) else {
+
             throw AuthError.invalidResponse
         }
 
         var request = URLRequest(url: url)
+
         request.httpMethod = method
 
         request.setValue(
@@ -170,23 +258,30 @@ final class AuthService {
         )
 
         if let token {
+
             request.setValue(
                 "Bearer \(token)",
                 forHTTPHeaderField: "Authorization"
             )
         }
 
-        request.httpBody = try JSONEncoder().encode(body)
-
-        let (data, response) = try await URLSession.shared.data(
-            for: request
+        request.httpBody = try JSONEncoder().encode(
+            body
         )
 
-        guard let http = response as? HTTPURLResponse else {
+        let (data, response) =
+            try await URLSession.shared.data(
+                for: request
+            )
+
+        guard let http =
+            response as? HTTPURLResponse else {
+
             throw AuthError.invalidResponse
         }
 
         guard (200...299).contains(http.statusCode) else {
+
             let message = String(
                 data: data,
                 encoding: .utf8
@@ -198,17 +293,25 @@ final class AuthService {
         return data
     }
 
-    // MARK: - KEYCHAIN
+    // MARK: - SAVE TOKEN TO KEYCHAIN
 
-    private func saveToken(_ token: String) throws {
+    private func saveToken(
+        _ token: String
+    ) throws {
 
         let service = "Kindred"
         let account = "kindred.jwt"
 
         let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account
+
+            kSecClass as String:
+                kSecClassGenericPassword,
+
+            kSecAttrService as String:
+                service,
+
+            kSecAttrAccount as String:
+                account
         ]
 
         SecItemDelete(query as CFDictionary)
@@ -227,20 +330,33 @@ final class AuthService {
         )
 
         guard status == errSecSuccess else {
+
             throw AuthError.serverError(
                 "Unable to save authentication token."
             )
         }
     }
-    
-    
+
+    // MARK: - GET SAVED TOKEN
+
     func getSavedToken() -> String? {
+
         let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "Kindred",
-            kSecAttrAccount as String: "kindred.jwt",
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
+
+            kSecClass as String:
+                kSecClassGenericPassword,
+
+            kSecAttrService as String:
+                "Kindred",
+
+            kSecAttrAccount as String:
+                "kindred.jwt",
+
+            kSecReturnData as String:
+                true,
+
+            kSecMatchLimit as String:
+                kSecMatchLimitOne
         ]
 
         var result: CFTypeRef?
@@ -252,10 +368,39 @@ final class AuthService {
 
         guard status == errSecSuccess,
               let data = result as? Data else {
+
             return nil
         }
 
-        return String(data: data, encoding: .utf8)
+        return String(
+            data: data,
+            encoding: .utf8
+        )
     }
 
+    // MARK: - LOGOUT
+
+    @discardableResult
+    func logout() -> Bool {
+
+        let query: [String: Any] = [
+
+            kSecClass as String:
+                kSecClassGenericPassword,
+
+            kSecAttrService as String:
+                "Kindred",
+
+            kSecAttrAccount as String:
+                "kindred.jwt"
+        ]
+
+        let status = SecItemDelete(
+            query as CFDictionary
+        )
+
+        return status == errSecSuccess ||
+            status == errSecItemNotFound
+    }
 }
+

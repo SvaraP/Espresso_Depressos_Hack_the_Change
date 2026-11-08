@@ -18,7 +18,6 @@ struct KindredProfile: Codable {
     var availability: [String]?
     var location: UserLocation?
 
-    // Accessibility fields
     var accessibilityRequired: Bool?
     var accessibilityNotes: String?
 }
@@ -38,7 +37,7 @@ private struct ProfileUpdate: Encodable {
     let meetingPreference: String
     let availability: [String]
     let location: UserLocation
-
+    let accessibilityNeeds: [String]
     let accessibilityRequired: Bool
     let accessibilityNotes: String
 }
@@ -53,6 +52,10 @@ struct ProfileView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
+
+    // Logout
+    @State private var showLogoutConfirmation = false
+    @State private var showWelcomeScreen = false
 
     private let forestGreen = Color(
         red: 0.12,
@@ -112,7 +115,7 @@ struct ProfileView: View {
 
                 VStack(spacing: 0) {
 
-                    // Full-width translucent title
+                    // Header
                     VStack(alignment: .leading, spacing: 8) {
 
                         Text("My Profile")
@@ -134,10 +137,7 @@ struct ProfileView: View {
                     )
                     .padding(.horizontal, 28)
                     .padding(.vertical, 12)
-                    .background {
-                        Rectangle()
-                            .fill(.ultraThinMaterial)
-                    }
+                    .background(.ultraThinMaterial)
                     .padding(.top, 35)
 
                     ScrollView {
@@ -153,10 +153,8 @@ struct ProfileView: View {
 
                             } else if let currentProfile = profile {
 
-                                // User information
                                 userCard(currentProfile)
 
-                                // Status messages
                                 if let successMessage {
                                     messageCard(
                                         successMessage,
@@ -171,17 +169,14 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // Edit / Save button
                                 editButton
 
                                 if isEditing {
                                     editDetailsCard
                                 }
 
-                                // Accessibility section
                                 accessibilityCard(currentProfile)
 
-                                // Interests
                                 profileSection(
                                     "My Interests",
                                     values: currentProfile.interests ?? [],
@@ -193,7 +188,6 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // Skills offered
                                 profileSection(
                                     "Skills I Can Share",
                                     values: currentProfile.skillsOffered ?? [],
@@ -205,7 +199,6 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // Skills wanted
                                 profileSection(
                                     "Skills I Want to Learn",
                                     values: currentProfile.skillsWanted ?? [],
@@ -217,7 +210,6 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // Goals
                                 profileSection(
                                     "My Goals",
                                     values: currentProfile.goals ?? [],
@@ -229,7 +221,6 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // Activity preference
                                 profileSection(
                                     "Preferred Activity Level",
                                     values: [
@@ -243,7 +234,6 @@ struct ProfileView: View {
                                     profile?.activityPreference = value
                                 }
 
-                                // Meeting preference
                                 profileSection(
                                     "How I Like to Meet",
                                     values: [
@@ -257,7 +247,6 @@ struct ProfileView: View {
                                     profile?.meetingPreference = value
                                 }
 
-                                // Availability
                                 profileSection(
                                     "My Availability",
                                     values: currentProfile.availability ?? [],
@@ -269,20 +258,15 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // Cancel editing
                                 if isEditing {
-
                                     Button {
-
                                         isEditing = false
                                         successMessage = nil
 
                                         Task {
                                             await loadProfile()
                                         }
-
                                     } label: {
-
                                         Text("Cancel Editing")
                                             .font(.system(
                                                 size: 17,
@@ -306,6 +290,9 @@ struct ProfileView: View {
 
                                 errorCard
                             }
+
+                            // Always accessible, even if loading fails
+                            logoutButton
                         }
                         .padding(.horizontal, 28)
                         .padding(.top, 24)
@@ -322,6 +309,91 @@ struct ProfileView: View {
         .task {
             await loadProfile()
         }
+
+        // MARK: - LOGOUT CONFIRMATION
+
+        .confirmationDialog(
+            "Are you sure you want to log out?",
+            isPresented: $showLogoutConfirmation,
+            titleVisibility: .visible
+        ) {
+
+            Button("Log Out", role: .destructive) {
+
+                if AuthService.shared.logout() {
+
+                    profile = nil
+                    isEditing = false
+                    showWelcomeScreen = true
+
+                } else {
+
+                    errorMessage =
+                        "Unable to log out. Please try again."
+                }
+            }
+
+            Button("Cancel", role: .cancel) {}
+
+        } message: {
+
+            Text(
+                "You will need to log in again to access your Kindred account."
+            )
+        }
+
+        // MARK: - WELCOME SCREEN AFTER LOGOUT
+
+        .fullScreenCover(
+            isPresented: $showWelcomeScreen
+        ) {
+
+            NavigationStack {
+                ContentView()
+            }
+            .interactiveDismissDisabled()
+        }
+    }
+
+    // MARK: - LOGOUT BUTTON
+
+    private var logoutButton: some View {
+
+        Button {
+            showLogoutConfirmation = true
+        } label: {
+
+            HStack(spacing: 12) {
+
+                Image(
+                    systemName:
+                        "rectangle.portrait.and.arrow.right"
+                )
+                .font(.system(size: 20))
+
+                Text("Log Out")
+                    .font(.system(
+                        size: 18,
+                        weight: .semibold
+                    ))
+            }
+            .foregroundStyle(cream)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(forestGreen)
+            .clipShape(
+                RoundedRectangle(cornerRadius: 12)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        cream.opacity(0.65),
+                        lineWidth: 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 15)
     }
 
     // MARK: - LOADING CARD
@@ -432,6 +504,7 @@ struct ProfileView: View {
                 .frame(height: 1)
 
             if let age = currentProfile.age {
+
                 Label(
                     "Age \(age)",
                     systemImage: "person"
@@ -510,6 +583,7 @@ struct ProfileView: View {
             HStack(spacing: 10) {
 
                 if isSaving {
+
                     ProgressView()
                         .tint(forestGreen)
                 }
@@ -611,10 +685,8 @@ struct ProfileView: View {
 
             HStack(spacing: 10) {
 
-                Image(
-                    systemName: "figure.roll"
-                )
-                .font(.system(size: 22))
+                Image(systemName: "figure.roll")
+                    .font(.system(size: 22))
 
                 Text("Accessibility Requirements")
                     .font(.system(
@@ -626,9 +698,11 @@ struct ProfileView: View {
 
             if isEditing {
 
-                Text("Do you require accessibility accommodations?")
-                    .font(.system(size: 15))
-                    .foregroundStyle(forestGreen)
+                Text(
+                    "Do you require accessibility accommodations?"
+                )
+                .font(.system(size: 15))
+                .foregroundStyle(forestGreen)
 
                 HStack(spacing: 12) {
 
@@ -751,7 +825,7 @@ struct ProfileView: View {
         )
     }
 
-    // MARK: - ACCESSIBILITY BUTTON
+    // MARK: - ACCESSIBILITY OPTION
 
     private func accessibilityOption(
         title: String,
@@ -961,8 +1035,11 @@ struct ProfileView: View {
         ] ?? []
 
         if values.contains(value) {
+
             values.removeAll { $0 == value }
+
         } else {
+
             values.append(value)
         }
 
@@ -1039,11 +1116,12 @@ struct ProfileView: View {
 
             let decoder = JSONDecoder()
 
-            // Direct user response
+            // Direct response
             if let direct = try? decoder.decode(
                 KindredProfile.self,
                 from: data
             ) {
+
                 profile = direct
                 return
             }
@@ -1095,7 +1173,6 @@ struct ProfileView: View {
                     in: .whitespacesAndNewlines
                 )
 
-        // Notes are required when Yes is selected
         if accessibilityRequired && cleanNotes.isEmpty {
 
             errorMessage =
@@ -1109,6 +1186,7 @@ struct ProfileView: View {
             )
 
         guard !cleanName.isEmpty else {
+
             errorMessage = "Please enter your name."
             return
         }
@@ -1144,6 +1222,10 @@ struct ProfileView: View {
                 location:
                     currentProfile.location
                         ?? UserLocation(),
+                accessibilityNeeds:
+                    accessibilityRequired && !cleanNotes.isEmpty
+                        ? [cleanNotes]
+                        : [],
                 accessibilityRequired:
                     accessibilityRequired,
                 accessibilityNotes:
@@ -1222,7 +1304,9 @@ private extension View {
 // MARK: - PREVIEW
 
 #Preview {
+
     NavigationStack {
         ProfileView()
     }
 }
+

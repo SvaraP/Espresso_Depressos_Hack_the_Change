@@ -2,8 +2,6 @@
 import Foundation
 import Observation
 
-// MARK: - USER PROFILE
-
 struct UserProfile: Codable {
 
     var id: String = UUID().uuidString
@@ -32,21 +30,17 @@ struct UserProfile: Codable {
 
     var location: UserLocation = UserLocation()
 
-    // MARK: - ACCESSIBILITY REQUIREMENTS
+    // MARK: - ACCESSIBILITY
 
     var accessibilityRequired: Bool? = nil
 
     var accessibilityNotes: String = ""
 }
 
-// MARK: - USER LOCATION
-
 struct UserLocation: Codable {
 
     var city: String = ""
 }
-
-// MARK: - SIGNUP STORE
 
 @Observable
 class SignupStore {
