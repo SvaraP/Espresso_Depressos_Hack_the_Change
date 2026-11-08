@@ -72,7 +72,7 @@ struct ContentView: View {
 
                         // SIGN UP BUTTON
                         NavigationLink {
-                            SignUpView()
+                            SignUpView(store: signupStore)
                         } label: {
                             Text("Sign Up")
                                 .font(
