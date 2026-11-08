@@ -11,6 +11,13 @@ const connectionSchema = new mongoose.Schema(
       }
     ],
 
+    // Sorted user IDs create a consistent unique identifier for each pair
+    pairKey: {
+      type: String,
+      required: true,
+      unique: true
+    },
+
     status: {
       type: String,
       enum: ["active", "ended"],
@@ -27,12 +34,8 @@ const connectionSchema = new mongoose.Schema(
   }
 );
 
-connectionSchema.index(
-  { users: 1 },
-  { unique: true }
-);
+connectionSchema.index({ users: 1 });
 
-module.exports = mongoose.model(
-  "Connection",
-  connectionSchema
-);
+const Connection = mongoose.models.Connection || mongoose.model("Connection", connectionSchema);
+
+module.exports = Connection;

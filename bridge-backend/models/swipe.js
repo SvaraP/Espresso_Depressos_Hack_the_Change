@@ -32,4 +32,6 @@ swipeSchema.index(
   { unique: true }
 );
 
-module.exports = mongoose.model("Swipe", swipeSchema);
+const Swipe = mongoose.models.Swipe || mongoose.model("Swipe", swipeSchema);
+
+module.exports = Swipe;

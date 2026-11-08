@@ -115,6 +115,6 @@ const userSchema = new mongoose.Schema(
 // Helpful index for looking up users by role
 userSchema.index({ role: 1 });
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 module.exports = User;
