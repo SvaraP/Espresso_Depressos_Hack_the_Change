@@ -17,6 +17,10 @@ struct KindredProfile: Codable {
     var meetingPreference: String?
     var availability: [String]?
     var location: UserLocation?
+
+    // Accessibility fields
+    var accessibilityRequired: Bool?
+    var accessibilityNotes: String?
 }
 
 private struct ProfileResponse: Decodable {
@@ -34,6 +38,9 @@ private struct ProfileUpdate: Encodable {
     let meetingPreference: String
     let availability: [String]
     let location: UserLocation
+
+    let accessibilityRequired: Bool
+    let accessibilityNotes: String
 }
 
 // MARK: - PROFILE VIEW
@@ -93,7 +100,6 @@ struct ProfileView: View {
 
             ZStack {
 
-                // SAME BACKGROUND AS SIGN UP
                 Image("WelcomeBackground")
                     .resizable()
                     .scaledToFill()
@@ -106,7 +112,7 @@ struct ProfileView: View {
 
                 VStack(spacing: 0) {
 
-                    // FULL-WIDTH TRANSLUCENT TITLE
+                    // Full-width translucent title
                     VStack(alignment: .leading, spacing: 8) {
 
                         Text("My Profile")
@@ -145,16 +151,12 @@ struct ProfileView: View {
 
                                 loadingCard
 
-                            } else if profile == nil {
+                            } else if let currentProfile = profile {
 
-                                errorCard
+                                // User information
+                                userCard(currentProfile)
 
-                            } else if let profile {
-
-                                // USER INFORMATION
-                                userCard(profile)
-
-                                // STATUS MESSAGES
+                                // Status messages
                                 if let successMessage {
                                     messageCard(
                                         successMessage,
@@ -169,18 +171,20 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // EDIT BUTTON
+                                // Edit / Save button
                                 editButton
 
-                                // EDIT NAME AND CITY
                                 if isEditing {
                                     editDetailsCard
                                 }
 
-                                // INTERESTS
+                                // Accessibility section
+                                accessibilityCard(currentProfile)
+
+                                // Interests
                                 profileSection(
                                     "My Interests",
-                                    values: profile.interests ?? [],
+                                    values: currentProfile.interests ?? [],
                                     options: interestOptions
                                 ) { value in
                                     toggle(
@@ -189,10 +193,10 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // SKILLS OFFERED
+                                // Skills offered
                                 profileSection(
                                     "Skills I Can Share",
-                                    values: profile.skillsOffered ?? [],
+                                    values: currentProfile.skillsOffered ?? [],
                                     options: skillOptions
                                 ) { value in
                                     toggle(
@@ -201,10 +205,10 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // SKILLS WANTED
+                                // Skills wanted
                                 profileSection(
                                     "Skills I Want to Learn",
-                                    values: profile.skillsWanted ?? [],
+                                    values: currentProfile.skillsWanted ?? [],
                                     options: skillOptions
                                 ) { value in
                                     toggle(
@@ -213,10 +217,10 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // GOALS
+                                // Goals
                                 profileSection(
                                     "My Goals",
-                                    values: profile.goals ?? [],
+                                    values: currentProfile.goals ?? [],
                                     options: goalOptions
                                 ) { value in
                                     toggle(
@@ -225,40 +229,38 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // ACTIVITY LEVEL
+                                // Activity preference
                                 profileSection(
                                     "Preferred Activity Level",
                                     values: [
-                                        profile.activityPreference
+                                        currentProfile.activityPreference
                                             ?? "moderate"
                                     ],
                                     options: [
                                         "low", "moderate", "high"
                                     ]
                                 ) { value in
-                                    self.profile?
-                                        .activityPreference = value
+                                    profile?.activityPreference = value
                                 }
 
-                                // MEETING PREFERENCE
+                                // Meeting preference
                                 profileSection(
                                     "How I Like to Meet",
                                     values: [
-                                        profile.meetingPreference
+                                        currentProfile.meetingPreference
                                             ?? "both"
                                     ],
                                     options: [
                                         "in-person", "virtual", "both"
                                     ]
                                 ) { value in
-                                    self.profile?
-                                        .meetingPreference = value
+                                    profile?.meetingPreference = value
                                 }
 
-                                // AVAILABILITY
+                                // Availability
                                 profileSection(
                                     "My Availability",
-                                    values: profile.availability ?? [],
+                                    values: currentProfile.availability ?? [],
                                     options: availabilityOptions
                                 ) { value in
                                     toggle(
@@ -267,11 +269,13 @@ struct ProfileView: View {
                                     )
                                 }
 
-                                // CANCEL EDITING
+                                // Cancel editing
                                 if isEditing {
 
                                     Button {
+
                                         isEditing = false
+                                        successMessage = nil
 
                                         Task {
                                             await loadProfile()
@@ -297,6 +301,10 @@ struct ProfileView: View {
                                             )
                                     }
                                 }
+
+                            } else {
+
+                                errorCard
                             }
                         }
                         .padding(.horizontal, 28)
@@ -342,18 +350,23 @@ struct ProfileView: View {
 
         VStack(alignment: .leading, spacing: 15) {
 
-            Image(systemName: "person.crop.circle.badge.exclamationmark")
-                .font(.system(size: 35))
-                .foregroundStyle(forestGreen)
+            Image(
+                systemName:
+                    "person.crop.circle.badge.exclamationmark"
+            )
+            .font(.system(size: 35))
+            .foregroundStyle(forestGreen)
 
             Text(errorMessage ?? "Unable to load profile.")
                 .font(.system(size: 16))
                 .foregroundStyle(forestGreen)
 
             Button {
+
                 Task {
                     await loadProfile()
                 }
+
             } label: {
 
                 Text("Try Again")
@@ -384,7 +397,7 @@ struct ProfileView: View {
     // MARK: - USER CARD
 
     private func userCard(
-        _ profile: KindredProfile
+        _ currentProfile: KindredProfile
     ) -> some View {
 
         VStack(alignment: .leading, spacing: 16) {
@@ -397,14 +410,14 @@ struct ProfileView: View {
 
                 VStack(alignment: .leading, spacing: 6) {
 
-                    Text(profile.name)
+                    Text(currentProfile.name)
                         .font(.system(
                             size: 27,
                             weight: .bold
                         ))
 
                     Text(
-                        profile.role == "senior"
+                        currentProfile.role == "senior"
                             ? "Senior"
                             : "Youth / Mentee"
                     )
@@ -418,14 +431,14 @@ struct ProfileView: View {
                 .fill(cream.opacity(0.35))
                 .frame(height: 1)
 
-            if let age = profile.age {
+            if let age = currentProfile.age {
                 Label(
                     "Age \(age)",
                     systemImage: "person"
                 )
             }
 
-            if let city = profile.location?.city,
+            if let city = currentProfile.location?.city,
                !city.isEmpty {
 
                 Label(
@@ -434,7 +447,7 @@ struct ProfileView: View {
                 )
             }
 
-            if let email = profile.email {
+            if let email = currentProfile.email {
 
                 Label(
                     email,
@@ -444,7 +457,7 @@ struct ProfileView: View {
                 .lineLimit(2)
             }
 
-            if let roles = profile.participationRoles,
+            if let roles = currentProfile.participationRoles,
                !roles.isEmpty {
 
                 Text(
@@ -488,6 +501,7 @@ struct ProfileView: View {
             } else {
 
                 successMessage = nil
+                errorMessage = nil
                 isEditing = true
             }
 
@@ -509,6 +523,7 @@ struct ProfileView: View {
                 )
 
                 if !isSaving {
+
                     Image(
                         systemName: isEditing
                             ? "checkmark"
@@ -564,9 +579,11 @@ struct ProfileView: View {
                         profile?.location?.city ?? ""
                     },
                     set: { value in
+
                         if profile?.location == nil {
                             profile?.location = UserLocation()
                         }
+
                         profile?.location?.city = value
                     }
                 )
@@ -582,6 +599,207 @@ struct ProfileView: View {
         .clipShape(
             RoundedRectangle(cornerRadius: 18)
         )
+    }
+
+    // MARK: - ACCESSIBILITY REQUIREMENTS
+
+    private func accessibilityCard(
+        _ currentProfile: KindredProfile
+    ) -> some View {
+
+        VStack(alignment: .leading, spacing: 14) {
+
+            HStack(spacing: 10) {
+
+                Image(
+                    systemName: "figure.roll"
+                )
+                .font(.system(size: 22))
+
+                Text("Accessibility Requirements")
+                    .font(.system(
+                        size: 22,
+                        weight: .bold
+                    ))
+            }
+            .foregroundStyle(forestGreen)
+
+            if isEditing {
+
+                Text("Do you require accessibility accommodations?")
+                    .font(.system(size: 15))
+                    .foregroundStyle(forestGreen)
+
+                HStack(spacing: 12) {
+
+                    accessibilityOption(
+                        title: "Yes",
+                        isSelected:
+                            currentProfile.accessibilityRequired == true
+                    ) {
+                        profile?.accessibilityRequired = true
+                    }
+
+                    accessibilityOption(
+                        title: "No",
+                        isSelected:
+                            currentProfile.accessibilityRequired == false
+                    ) {
+                        profile?.accessibilityRequired = false
+                        profile?.accessibilityNotes = ""
+                    }
+                }
+
+                if currentProfile.accessibilityRequired == true {
+
+                    Text("Accessibility Notes (Required)")
+                        .font(.system(
+                            size: 15,
+                            weight: .semibold
+                        ))
+                        .foregroundStyle(forestGreen)
+
+                    TextEditor(
+                        text: Binding(
+                            get: {
+                                profile?.accessibilityNotes ?? ""
+                            },
+                            set: { value in
+                                profile?.accessibilityNotes = value
+                            }
+                        )
+                    )
+                    .frame(minHeight: 110)
+                    .scrollContentBackground(.hidden)
+                    .padding(10)
+                    .background(cream.opacity(0.95))
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 12)
+                    )
+
+                    Text(
+                        "Describe any accommodations you need, such as wheelchair access, accessible transportation, seating, or assistance with stairs."
+                    )
+                    .font(.system(size: 13))
+                    .foregroundStyle(
+                        forestGreen.opacity(0.75)
+                    )
+                }
+
+            } else {
+
+                HStack(spacing: 10) {
+
+                    Image(
+                        systemName:
+                            currentProfile.accessibilityRequired == true
+                                ? "checkmark.circle.fill"
+                                : "circle"
+                    )
+
+                    Text(
+                        currentProfile.accessibilityRequired == true
+                            ? "Accessibility Required: Yes"
+                            : currentProfile.accessibilityRequired == false
+                                ? "Accessibility Required: No"
+                                : "Accessibility preference not set"
+                    )
+                    .font(.system(
+                        size: 16,
+                        weight: .medium
+                    ))
+                }
+                .foregroundStyle(forestGreen)
+
+                if currentProfile.accessibilityRequired == true {
+
+                    Text("Accessibility Notes")
+                        .font(.system(
+                            size: 15,
+                            weight: .semibold
+                        ))
+                        .foregroundStyle(forestGreen)
+
+                    Text(
+                        (currentProfile.accessibilityNotes ?? "")
+                            .isEmpty
+                            ? "No notes provided"
+                            : currentProfile.accessibilityNotes ?? ""
+                    )
+                    .font(.system(size: 15))
+                    .foregroundStyle(forestGreen)
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
+                    .padding(14)
+                    .background(cream.opacity(0.90))
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 12)
+                    )
+                }
+            }
+        }
+        .padding(18)
+        .frame(
+            maxWidth: .infinity,
+            alignment: .leading
+        )
+        .background(.ultraThinMaterial)
+        .clipShape(
+            RoundedRectangle(cornerRadius: 18)
+        )
+    }
+
+    // MARK: - ACCESSIBILITY BUTTON
+
+    private func accessibilityOption(
+        title: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+
+        Button(action: action) {
+
+            HStack(spacing: 8) {
+
+                Text(title)
+                    .font(.system(
+                        size: 16,
+                        weight: .semibold
+                    ))
+
+                Spacer()
+
+                Image(
+                    systemName: isSelected
+                        ? "checkmark.circle.fill"
+                        : "circle"
+                )
+                .font(.system(size: 18))
+            }
+            .foregroundStyle(cream)
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .background(
+                forestGreen.opacity(
+                    isSelected ? 0.95 : 0.80
+                )
+            )
+            .clipShape(
+                RoundedRectangle(cornerRadius: 12)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isSelected
+                            ? cream
+                            : cream.opacity(0.4),
+                        lineWidth: isSelected ? 2 : 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - PROFILE SECTIONS
@@ -610,7 +828,9 @@ struct ProfileView: View {
 
                 Text("Nothing added yet")
                     .font(.system(size: 15))
-                    .foregroundStyle(forestGreen.opacity(0.7))
+                    .foregroundStyle(
+                        forestGreen.opacity(0.7)
+                    )
 
             } else {
 
@@ -645,7 +865,9 @@ struct ProfileView: View {
                                         weight: .medium
                                     ))
                                     .lineLimit(2)
-                                    .multilineTextAlignment(.leading)
+                                    .multilineTextAlignment(
+                                        .leading
+                                    )
 
                                 Spacer(minLength: 0)
 
@@ -681,7 +903,8 @@ struct ProfileView: View {
                                     selected
                                         ? cream
                                         : cream.opacity(0.65),
-                                    lineWidth: selected ? 2 : 1
+                                    lineWidth:
+                                        selected ? 2 : 1
                                 )
                             }
                         }
@@ -733,7 +956,9 @@ struct ProfileView: View {
             return
         }
 
-        var values = currentProfile[keyPath: keyPath] ?? []
+        var values = currentProfile[
+            keyPath: keyPath
+        ] ?? []
 
         if values.contains(value) {
             values.removeAll { $0 == value }
@@ -760,7 +985,8 @@ struct ProfileView: View {
         }
 
         let url = URL(
-            string: "http://127.0.0.1:5000/api/v1/users/me"
+            string:
+                "http://127.0.0.1:5000/api/v1/users/me"
         )!
 
         var request = URLRequest(url: url)
@@ -847,13 +1073,47 @@ struct ProfileView: View {
     @MainActor
     private func saveProfile() async {
 
-        guard let profile else {
+        guard let currentProfile = profile else {
+            return
+        }
+
+        errorMessage = nil
+        successMessage = nil
+
+        // Validate accessibility selection
+        guard let accessibilityRequired =
+            currentProfile.accessibilityRequired else {
+
+            errorMessage =
+                "Please select Yes or No for accessibility requirements."
+            return
+        }
+
+        let cleanNotes =
+            (currentProfile.accessibilityNotes ?? "")
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+
+        // Notes are required when Yes is selected
+        if accessibilityRequired && cleanNotes.isEmpty {
+
+            errorMessage =
+                "Please provide accessibility notes."
+            return
+        }
+
+        let cleanName =
+            currentProfile.name.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+        guard !cleanName.isEmpty else {
+            errorMessage = "Please enter your name."
             return
         }
 
         isSaving = true
-        errorMessage = nil
-        successMessage = nil
 
         defer {
             isSaving = false
@@ -866,17 +1126,28 @@ struct ProfileView: View {
             )
 
             let update = ProfileUpdate(
-                name: profile.name,
-                interests: profile.interests ?? [],
-                skillsOffered: profile.skillsOffered ?? [],
-                skillsWanted: profile.skillsWanted ?? [],
-                goals: profile.goals ?? [],
+                name: cleanName,
+                interests: currentProfile.interests ?? [],
+                skillsOffered:
+                    currentProfile.skillsOffered ?? [],
+                skillsWanted:
+                    currentProfile.skillsWanted ?? [],
+                goals: currentProfile.goals ?? [],
                 activityPreference:
-                    profile.activityPreference ?? "moderate",
+                    currentProfile.activityPreference
+                        ?? "moderate",
                 meetingPreference:
-                    profile.meetingPreference ?? "both",
-                availability: profile.availability ?? [],
-                location: profile.location ?? UserLocation()
+                    currentProfile.meetingPreference
+                        ?? "both",
+                availability:
+                    currentProfile.availability ?? [],
+                location:
+                    currentProfile.location
+                        ?? UserLocation(),
+                accessibilityRequired:
+                    accessibilityRequired,
+                accessibilityNotes:
+                    accessibilityRequired ? cleanNotes : ""
             )
 
             request.httpBody = try JSONEncoder().encode(
@@ -905,6 +1176,7 @@ struct ProfileView: View {
             await loadProfile()
 
             if errorMessage == nil {
+
                 successMessage =
                     "Your profile has been updated successfully!"
             }

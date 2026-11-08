@@ -1,6 +1,8 @@
 
 import SwiftUI
 
+// MARK: - SIGN UP VIEW
+
 struct SignUpView: View {
 
     @Bindable var store: SignupStore
@@ -10,17 +12,26 @@ struct SignUpView: View {
     @State private var confirmPassword = ""
     @State private var ageText = ""
 
+    // Accessibility information
+    @State private var accessibilityRequired: Bool?
+    @State private var accessibilityNotes = ""
+
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var accountCreated = false
-    @State private var showMainApp = false
+    @State private var showProfile = false
+    
 
     private let forestGreen = Color(
-        red: 0.12, green: 0.28, blue: 0.20
+        red: 0.12,
+        green: 0.28,
+        blue: 0.20
     )
 
     private let cream = Color(
-        red: 0.97, green: 0.96, blue: 0.91
+        red: 0.97,
+        green: 0.96,
+        blue: 0.91
     )
 
     private let interestOptions = [
@@ -49,13 +60,15 @@ struct SignUpView: View {
         "Weekends"
     ]
 
+    // MARK: - MAIN VIEW
+
     var body: some View {
 
         GeometryReader { geometry in
 
             ZStack {
 
-                // ORIGINAL FULL-SCREEN BACKGROUND
+                // Full-screen background
                 Image("WelcomeBackground")
                     .resizable()
                     .scaledToFill()
@@ -68,7 +81,7 @@ struct SignUpView: View {
 
                 VStack(spacing: 0) {
 
-                    // FULL-WIDTH TRANSLUCENT TITLE
+                    // Full-width translucent title
                     VStack(alignment: .leading, spacing: 8) {
 
                         Text("Create an account")
@@ -103,7 +116,8 @@ struct SignUpView: View {
                             spacing: 24
                         ) {
 
-                            // ROLE SELECTION
+                            // MARK: ROLE SELECTION
+
                             VStack(spacing: 20) {
 
                                 RoleSelectionCard(
@@ -134,7 +148,8 @@ struct SignUpView: View {
                             }
                             .padding(.top, 24)
 
-                            // ACCOUNT DETAILS
+                            // MARK: ACCOUNT DETAILS
+
                             sectionTitle("Your Details")
 
                             VStack(spacing: 12) {
@@ -164,14 +179,14 @@ struct SignUpView: View {
                                     "Password (8+ characters)",
                                     text: $password
                                 )
-                                .textContentType(.oneTimeCode)
+                                .textContentType(.newPassword)
                                 .signupInputStyle(cream: cream)
 
                                 SecureField(
                                     "Confirm Password",
                                     text: $confirmPassword
                                 )
-                                .textContentType(.oneTimeCode)
+                                .textContentType(.newPassword)
                                 .signupInputStyle(cream: cream)
 
                                 inputField(
@@ -180,7 +195,93 @@ struct SignUpView: View {
                                 )
                             }
 
-                            // INTERESTS
+                            // MARK: ACCESSIBILITY REQUIREMENTS
+
+                            sectionTitle("Accessibility Requirements")
+
+                            VStack(
+                                alignment: .leading,
+                                spacing: 14
+                            ) {
+
+                                Text(
+                                    "Do you require accessibility accommodations?"
+                                )
+                                .font(.system(
+                                    size: 16,
+                                    weight: .semibold
+                                ))
+                                .foregroundStyle(forestGreen)
+
+                                HStack(spacing: 12) {
+
+                                    accessibilityOption(
+                                        title: "Yes",
+                                        isSelected:
+                                            accessibilityRequired == true
+                                    ) {
+                                        accessibilityRequired = true
+                                    }
+
+                                    accessibilityOption(
+                                        title: "No",
+                                        isSelected:
+                                            accessibilityRequired == false
+                                    ) {
+                                        accessibilityRequired = false
+                                        accessibilityNotes = ""
+                                    }
+                                }
+
+                                if accessibilityRequired == true {
+
+                                    Text(
+                                        "Accessibility Notes (Required)"
+                                    )
+                                    .font(.system(
+                                        size: 15,
+                                        weight: .semibold
+                                    ))
+                                    .foregroundStyle(forestGreen)
+
+                                    TextEditor(
+                                        text: $accessibilityNotes
+                                    )
+                                    .frame(minHeight: 110)
+                                    .scrollContentBackground(.hidden)
+                                    .padding(10)
+                                    .background(
+                                        cream.opacity(0.95)
+                                    )
+                                    .clipShape(
+                                        RoundedRectangle(
+                                            cornerRadius: 12
+                                        )
+                                    )
+
+                                    Text(
+                                        "Please describe any accommodations you need, such as wheelchair access, accessible transportation, seating, or assistance with stairs."
+                                    )
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(
+                                        forestGreen.opacity(0.75)
+                                    )
+                                }
+                            }
+                            .padding(18)
+                            .frame(
+                                maxWidth: .infinity,
+                                alignment: .leading
+                            )
+                            .background(.ultraThinMaterial)
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 18
+                                )
+                            )
+
+                            // MARK: INTERESTS
+
                             sectionTitle("What Interests You?")
 
                             Text("Choose all that apply")
@@ -197,7 +298,8 @@ struct SignUpView: View {
                                 )
                             }
 
-                            // SKILLS OFFERED
+                            // MARK: SKILLS OFFERED
+
                             sectionTitle("Skills You Can Share")
 
                             selectionGrid(
@@ -210,7 +312,8 @@ struct SignUpView: View {
                                 )
                             }
 
-                            // SKILLS WANTED
+                            // MARK: SKILLS WANTED
+
                             sectionTitle("Skills You Want to Learn")
 
                             selectionGrid(
@@ -223,7 +326,8 @@ struct SignUpView: View {
                                 )
                             }
 
-                            // GOALS
+                            // MARK: GOALS
+
                             sectionTitle("Your Goals")
 
                             selectionGrid(
@@ -236,8 +340,11 @@ struct SignUpView: View {
                                 )
                             }
 
-                            // ACTIVITY PREFERENCE
-                            sectionTitle("Preferred Activity Level")
+                            // MARK: ACTIVITY PREFERENCE
+
+                            sectionTitle(
+                                "Preferred Activity Level"
+                            )
 
                             selectionGrid(
                                 ["low", "moderate", "high"],
@@ -248,8 +355,11 @@ struct SignUpView: View {
                                 store.profile.activityPreference = value
                             }
 
-                            // MEETING PREFERENCE
-                            sectionTitle("How Would You Like to Meet?")
+                            // MARK: MEETING PREFERENCE
+
+                            sectionTitle(
+                                "How Would You Like to Meet?"
+                            )
 
                             selectionGrid(
                                 ["in-person", "virtual", "both"],
@@ -261,8 +371,11 @@ struct SignUpView: View {
                                 ]
                             }
 
-                            // AVAILABILITY
-                            sectionTitle("When Are You Available?")
+                            // MARK: AVAILABILITY
+
+                            sectionTitle(
+                                "When Are You Available?"
+                            )
 
                             selectionGrid(
                                 availabilityOptions,
@@ -274,7 +387,8 @@ struct SignUpView: View {
                                 )
                             }
 
-                            // ERROR MESSAGE
+                            // MARK: ERROR MESSAGE
+
                             if let errorMessage {
 
                                 Text(errorMessage)
@@ -282,7 +396,9 @@ struct SignUpView: View {
                                     .foregroundStyle(.red)
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .background(cream.opacity(0.95))
+                                    .background(
+                                        cream.opacity(0.95)
+                                    )
                                     .clipShape(
                                         RoundedRectangle(
                                             cornerRadius: 12
@@ -290,7 +406,8 @@ struct SignUpView: View {
                                     )
                             }
 
-                            // CREATE ACCOUNT BUTTON
+                            // MARK: CREATE ACCOUNT
+
                             Button {
 
                                 Task {
@@ -327,7 +444,9 @@ struct SignUpView: View {
                                 .frame(height: 56)
                                 .background(cream)
                                 .clipShape(
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(
+                                        cornerRadius: 12
+                                    )
                                 )
                             }
                             .disabled(isLoading)
@@ -346,13 +465,14 @@ struct SignUpView: View {
             }
         }
 
-        // SUCCESS CONFIRMATION
+        // MARK: SUCCESS CONFIRMATION
+
         .alert(
             "Welcome to Kindred!",
             isPresented: $accountCreated
         ) {
-            Button("Continue to Kindred") {
-                showMainApp = true
+            Button("View My Profile") {
+                showProfile = true
             }
         } message: {
             Text(
@@ -360,10 +480,10 @@ struct SignUpView: View {
             )
         }
 
-        // ENTER MAIN APP AFTER SUCCESSFUL SIGNUP
-        .fullScreenCover(isPresented: $showMainApp) {
-            MainTabView()
-                .interactiveDismissDisabled()
+        .navigationDestination(
+            isPresented: $showProfile
+        ) {
+            ProfileView()
         }
     }
 
@@ -396,9 +516,65 @@ struct SignUpView: View {
         text: Binding<String>
     ) -> some View {
 
-        TextField(placeholder, text: text)
-            .signupInputStyle(cream: cream)
+        TextField(
+            placeholder,
+            text: text
+        )
+        .signupInputStyle(cream: cream)
     }
+
+    // MARK: - ACCESSIBILITY BUTTON
+
+    private func accessibilityOption(
+        title: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+
+        Button(action: action) {
+
+            HStack(spacing: 8) {
+
+                Text(title)
+                    .font(.system(
+                        size: 16,
+                        weight: .semibold
+                    ))
+
+                Spacer()
+
+                Image(
+                    systemName: isSelected
+                        ? "checkmark.circle.fill"
+                        : "circle"
+                )
+                .font(.system(size: 18))
+            }
+            .foregroundStyle(cream)
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .background(
+                forestGreen.opacity(
+                    isSelected ? 0.95 : 0.80
+                )
+            )
+            .clipShape(
+                RoundedRectangle(cornerRadius: 12)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isSelected
+                            ? cream
+                            : cream.opacity(0.4),
+                        lineWidth: isSelected ? 2 : 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - SELECTION GRID
 
     private func selectionGrid(
         _ options: [String],
@@ -414,12 +590,18 @@ struct SignUpView: View {
             spacing: 10
         ) {
 
-            ForEach(options, id: \.self) { option in
+            ForEach(
+                options,
+                id: \.self
+            ) { option in
 
-                let isSelected = selected.contains(option)
+                let isSelected =
+                    selected.contains(option)
 
                 Button {
+
                     action(option)
+
                 } label: {
 
                     HStack(spacing: 6) {
@@ -434,8 +616,11 @@ struct SignUpView: View {
                         Spacer(minLength: 0)
 
                         if isSelected {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12))
+
+                            Image(
+                                systemName: "checkmark"
+                            )
+                            .font(.system(size: 12))
                         }
                     }
                     .foregroundStyle(cream)
@@ -448,16 +633,21 @@ struct SignUpView: View {
                         )
                     )
                     .clipShape(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(
+                            cornerRadius: 12
+                        )
                     )
                     .overlay {
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                isSelected
-                                    ? cream
-                                    : cream.opacity(0.4),
-                                lineWidth: isSelected ? 2 : 1
-                            )
+                        RoundedRectangle(
+                            cornerRadius: 12
+                        )
+                        .stroke(
+                            isSelected
+                                ? cream
+                                : cream.opacity(0.4),
+                            lineWidth:
+                                isSelected ? 2 : 1
+                        )
                     }
                 }
                 .buttonStyle(.plain)
@@ -465,13 +655,17 @@ struct SignUpView: View {
         }
     }
 
+    // MARK: - TOGGLE SELECTIONS
+
     private func toggle(
         _ value: String,
         in array: inout [String]
     ) {
 
         if array.contains(value) {
-            array.removeAll { $0 == value }
+            array.removeAll {
+                $0 == value
+            }
         } else {
             array.append(value)
         }
@@ -482,18 +676,23 @@ struct SignUpView: View {
     @MainActor
     private func createAccount() async {
 
-        guard !isLoading else { return }
+        guard !isLoading else {
+            return
+        }
 
         errorMessage = nil
 
-        let name = store.profile.name.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
+        let name =
+            store.profile.name.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
 
-        let cleanEmail = email.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
+        let cleanEmail =
+            email.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
 
+        // Validate account information
         guard !name.isEmpty,
               let age = Int(ageText),
               (13...120).contains(age),
@@ -506,13 +705,16 @@ struct SignUpView: View {
         }
 
         guard password.count >= 8 else {
+
             errorMessage =
                 "Password must be at least 8 characters."
             return
         }
 
         guard password == confirmPassword else {
-            errorMessage = "Passwords do not match."
+
+            errorMessage =
+                "Passwords do not match."
             return
         }
 
@@ -524,14 +726,43 @@ struct SignUpView: View {
             return
         }
 
+        // Validate accessibility requirements
+        guard let accessibilityRequired else {
+
+            errorMessage =
+                "Please select Yes or No for accessibility requirements."
+            return
+        }
+
+        let cleanNotes =
+            accessibilityNotes.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+        if accessibilityRequired && cleanNotes.isEmpty {
+
+            errorMessage =
+                "Please provide accessibility notes."
+            return
+        }
+
         store.profile.age = age
 
+        // Store accessibility information
+        store.profile.accessibilityRequired =
+            accessibilityRequired
+
+        store.profile.accessibilityNotes =
+            accessibilityRequired ? cleanNotes : ""
+
         isLoading = true
-        defer { isLoading = false }
+
+        defer {
+            isLoading = false
+        }
 
         do {
 
-            // EXISTING MONGODB BACKEND CONNECTION
             try await AuthService.shared.register(
                 name: name,
                 email: cleanEmail,
@@ -541,14 +772,13 @@ struct SignUpView: View {
                 profile: store.profile
             )
 
-            // Registration and profile save succeeded.
-            // AuthService must also save the JWT.
             password = ""
             confirmPassword = ""
 
             accountCreated = true
 
         } catch {
+
             errorMessage = error.localizedDescription
         }
     }
@@ -560,15 +790,21 @@ private struct SignupInputModifier: ViewModifier {
 
     let cream: Color
 
-    func body(content: Content) -> some View {
+    func body(
+        content: Content
+    ) -> some View {
 
         content
             .font(.system(size: 16))
             .foregroundStyle(.black)
             .padding(16)
-            .background(cream.opacity(0.95))
+            .background(
+                cream.opacity(0.95)
+            )
             .clipShape(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(
+                    cornerRadius: 12
+                )
             )
     }
 }
@@ -579,7 +815,11 @@ private extension View {
         cream: Color
     ) -> some View {
 
-        modifier(SignupInputModifier(cream: cream))
+        modifier(
+            SignupInputModifier(
+                cream: cream
+            )
+        )
     }
 }
 
@@ -593,11 +833,15 @@ struct RoleSelectionCard: View {
     let action: () -> Void
 
     private let forestGreen = Color(
-        red: 0.12, green: 0.28, blue: 0.20
+        red: 0.12,
+        green: 0.28,
+        blue: 0.20
     )
 
     private let cream = Color(
-        red: 0.97, green: 0.96, blue: 0.91
+        red: 0.97,
+        green: 0.96,
+        blue: 0.91
     )
 
     var body: some View {
@@ -618,8 +862,12 @@ struct RoleSelectionCard: View {
                         ))
 
                     Text(description)
-                        .font(.system(size: 16))
-                        .multilineTextAlignment(.leading)
+                        .font(.system(
+                            size: 16
+                        ))
+                        .multilineTextAlignment(
+                            .leading
+                        )
                 }
 
                 Spacer(minLength: 0)
@@ -638,29 +886,39 @@ struct RoleSelectionCard: View {
                 minHeight: 155
             )
             .background {
-                RoundedRectangle(cornerRadius: 22)
-                    .fill(
-                        forestGreen.opacity(
-                            isSelected ? 0.95 : 0.80
-                        )
+                RoundedRectangle(
+                    cornerRadius: 22
+                )
+                .fill(
+                    forestGreen.opacity(
+                        isSelected ? 0.95 : 0.80
                     )
+                )
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 22)
-                    .stroke(
-                        isSelected
-                            ? cream
-                            : cream.opacity(0.65),
-                        lineWidth: isSelected ? 2 : 1
-                    )
+                RoundedRectangle(
+                    cornerRadius: 22
+                )
+                .stroke(
+                    isSelected
+                        ? cream
+                        : cream.opacity(0.65),
+                    lineWidth:
+                        isSelected ? 2 : 1
+                )
             }
         }
         .buttonStyle(.plain)
     }
 }
 
+// MARK: - PREVIEW
+
 #Preview {
     NavigationStack {
-        SignUpView(store: SignupStore())
+        SignUpView(
+            store: SignupStore()
+        )
     }
 }
+
