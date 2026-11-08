@@ -10,6 +10,8 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const swipeRoutes = require("./routes/swipeRoutes");
+const connectionRoutes = require("./routes/connectionRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
@@ -26,6 +28,8 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/matches", matchRoutes);
 app.use("/api/v1/swipes", swipeRoutes);
+app.use("/api/v1/connections", connectionRoutes);
+app.use("/api/v1/chat", chatRoutes);
 
 // Health check endpoint
 app.get("/api/v1/health", (req, res) => {

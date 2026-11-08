@@ -1,9 +1,9 @@
 
 const mongoose = require("mongoose");
 
-const User = require("../models/User");
-const Swipe = require("../models/Swipe");
-const Connection = require("../models/Connection");
+const User = require("../models/user");
+const Swipe = require("../models/swipe");
+const Connection = require("../models/connection");
 
 // Record a Connect or Pass action
 const createSwipe = async (req, res) => {
