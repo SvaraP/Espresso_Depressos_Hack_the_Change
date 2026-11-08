@@ -14,6 +14,7 @@ const swipeRoutes = require("./routes/swipeRoutes");
 const connectionRoutes = require("./routes/connectionRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const initializeChatSocket = require("./sockets/chatSocket");
+const activityRoutes = require("./routes/activityRoutes");
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/v1/matches", matchRoutes);
 app.use("/api/v1/swipes", swipeRoutes);
 app.use("/api/v1/connections", connectionRoutes);
 app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1", activityRoutes);
 
 // Health check endpoint
 app.get("/api/v1/health", (req, res) => {
